@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Погода</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bg"></canvas>
+<main class="card">
+  <h1 id="city">Алматы</h1>
+  <div class="now">
+    <div id="temp" class="temp">--°</div>
+    <div id="desc" class="desc">загрузка…</div>
+  </div>
+  <div class="grid">
+    <div class="tile"><span>Ощущается</span><b id="feels">--°</b></div>
+    <div class="tile"><span>Ветер</span><b id="wind">-- м/с</b></div>
+    <div class="tile"><span>Влажность</span><b id="humidity">--%</b></div>
+    <div class="tile"><span>Воздух (AQI)</span><b id="aqi">--</b></div>
+  </div>
+  <div class="advice"><span>Что надеть</span><p id="advice">—</p></div>
+  <p id="status" class="status"></p>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
