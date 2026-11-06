@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>Шар предсказаний</title>
+  <style>
+    * { box-sizing: border-box; image-rendering: pixelated; }
+    body {
+      font-family: "Courier New", ui-monospace, monospace;
+      margin: 0; padding: 16px;
+      background: var(--tg-theme-bg-color, #fff);
+      color: var(--tg-theme-text-color, #000);
+      font-size: 15px; line-height: 1.5; text-align: center;
+    }
+    h3 {
+      font-size: 18px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;
+      border-bottom: 2px solid var(--tg-theme-text-color, #000); padding-bottom: 6px; text-align: left;
+    }
+    #ball {
+      display: block; margin: 16px auto; width: 128px; height: 128px;
+      transform-origin: 50% 100%;
+    }
+    #ball.shake { animation: wobble 0.6s steps(6) 1; }
+    @keyframes wobble {
+      0% { transform: rotate(0); }
+      20% { transform: rotate(-8deg); }
+      40% { transform: rotate(8deg); }
+      60% { transform: rotate(-6deg); }
+      80% { transform: rotate(6deg); }
+      100% { transform: rotate(0); }
+    }
+    #answer {
+      min-height: 3em; font-size: 18px; font-weight: bold;
+      border: 2px solid var(--tg-theme-text-color, #000); padding: 10px; margin: 12px 0;
+    }
+    #answer.empty { border-style: dashed; font-weight: normal; }
+    button {
+      font-family: inherit; text-transform: uppercase; letter-spacing: 1px;
+      background: var(--tg-theme-button-color, #2481cc);
+      color: var(--tg-theme-button-text-color, #fff);
+      border: 2px solid var(--tg-theme-text-color, #000);
+      border-radius: 0; padding: 12px 16px; font-size: 14px; width: 100%;
+      box-shadow: 4px 4px 0 var(--tg-theme-text-color, #000);
+      margin-top: 12px; cursor: pointer;
+    }
+    button:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--tg-theme-text-color, #000); }
+    button:disabled { opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <h3>Шар предсказаний</h3>
+  <svg id="ball" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+    <rect x="4" y="1" width="8" height="1" fill="currentColor"/>
+    <rect x="2" y="2" width="2" height="1" fill="currentColor"/>
+    <rect x="12" y="2" width="2" height="1" fill="currentColor"/>
+    <rect x="1" y="3" width="1" height="2" fill="currentColor"/>
+    <rect x="14" y="3" width="1" height="2" fill="currentColor"/>
+    <rect x="0" y="5" width="1" height="6" fill="currentColor"/>
+    <rect x="15" y="5" width="1" height="6" fill="currentColor"/>
+    <rect x="1" y="11" width="1" height="2" fill="currentColor"/>
+    <rect x="14" y="11" width="1" height="2" fill="currentColor"/>
+    <rect x="2" y="13" width="2" height="1" fill="currentColor"/>
+    <rect x="12" y="13" width="2" height="1" fill="currentColor"/>
+    <rect x="4" y="14" width="8" height="1" fill="currentColor"/>
+    <rect x="3" y="4" width="10" height="8" fill="var(--tg-theme-bg-color, #fff)"/>
+    <rect x="5" y="5" width="2" height="1" fill="var(--tg-theme-hint-color, #888)"/>
+    <rect x="4" y="6" width="1" height="1" fill="var(--tg-theme-hint-color, #888)"/>
+    <rect x="6" y="6" width="5" height="3" fill="currentColor"/>
+    <rect x="6" y="9" width="2" height="1" fill="var(--tg-theme-bg-color, #fff)"/>
+  </svg>
+  <p id="answer" class="empty">Задай вопрос в уме и потряси шар</p>
+  <button id="shake">Потрясти</button>
+  <button id="back" style="background:transparent;color:var(--tg-theme-text-color,#000);">Назад к погоде</button>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const ANSWERS = [
+      'Бесспорно', 'Предрешено', 'Никаких сомнений', 'Определённо да',
+      'Можешь быть уверен в этом', 'Мне кажется — да', 'Вероятнее всего', 'Хорошие перспективы',
+      'Знаки говорят — да', 'Да', 'Пока не ясно, попробуй снова', 'Спроси позже',
+      'Лучше не рассказывать', 'Сейчас нельзя предсказать', 'Сконцентрируйся и спроси снова',
+      'Не рассчитывай на это', 'По моим данным — нет', 'Перспективы не очень', 'Очень сомнительно', 'Нет'
+    ];
+    let last = -1;
+    function pick() {
+      let i;
+      do { i = Math.floor(Math.random() * ANSWERS.length); } while (i === last);
+      last = i;
+      return ANSWERS[i];
+    }
+
+    const ball = document.getElementById('ball');
+    const answer = document.getElementById('answer');
+    const shakeBtn = document.getElementById('shake');
+
+    shakeBtn.onclick = () => {
+      shakeBtn.disabled = true;
+      answer.className = '';
+      answer.textContent = '...';
+      ball.classList.remove('shake');
+      void ball.offsetWidth;
+      ball.classList.add('shake');
+      try { tg.HapticFeedback?.impactOccurred('medium'); } catch (e) {}
+      setTimeout(() => {
+        answer.textContent = pick();
+        shakeBtn.disabled = false;
+        try { tg.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+      }, 700);
+    };
+
+    document.getElementById('back').onclick = () => { location.href = './'; };
+  </script>
+</body>
+</html>
